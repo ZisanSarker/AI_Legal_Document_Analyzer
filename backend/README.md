@@ -1,37 +1,42 @@
-## 🖥️ Frontend
+## ⚙️ Backend
 
-Located in the [`frontend/`](./frontend) directory.  
-The frontend is built with **Next.js**, a React framework that supports SSR (Server-Side Rendering) and static site generation.
+Located in the backend/ directory.
 
-### 🧰 Tech Stack
-- **Next.js** — React framework for SSR/SSG
-- **React** — UI library
-- **Tailwind CSS** *(or your styling framework)*
-- **Axios / Fetch API** — For API communication
-- **TypeScript / JavaScript** — Programming language
+🧰 Tech Stack
 
-### 📁 Folder Structure
-frontend/
-├── public/ # Static assets
+Node.js — JavaScript runtime
+
+Express.js — Web framework
+
+MongoDB / PostgreSQL / MySQL — Database (depending on setup)
+
+JWT / Passport.js — Authentication
+
+Dotenv — Environment variable management
+
+📁 Folder Structure
+
+backend/
 ├── src/
-│ ├── app/ or pages/ # Next.js routes
-│ ├── components/ # Reusable UI components
-│ ├── styles/ # CSS or Tailwind styles
-│ └── utils/ # Helper functions
-├── package.json # Frontend dependencies and scripts
-└── README.md # Frontend documentation
+│ ├── routes/ # API routes
+│ ├── controllers/ # Route logic
+│ ├── models/ # Database models
+│ ├── middlewares/ # Middleware functions
+│ └── config/ # Configuration files
+├── .env.example # Environment variables example
+├── package.json # Backend dependencies
+└── README.md # Backend documentation
 
+⚙️ Common Commands
 
-### ⚙️ Common Commands
-```bash
 # Install dependencies
+
 npm install
 
 # Run in development mode
+
 npm run dev
 
-# Build for production
-npm run build
-
 # Start production server
+
 npm start
