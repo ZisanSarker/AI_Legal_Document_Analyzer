@@ -3,7 +3,8 @@ import "dotenv/config";
 import cors from "cors";
 import morgan from "morgan";
 import extractRouter from "./modules/document/document.route.js";
-import preprocessingRouter from "./modules/semantic-analysis/preprocessing.route.js";
+import preprocessingRouter from "./modules/preprocessing/preprocessing.route.js";
+import semanticRouter from "./modules/semantic/semantic.route.js";
 
 const app = express();
 
@@ -15,13 +16,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(morgan("dev"));
 
-
 app.get("/", (req, res) => {
   res.send("Server working fine!");
 });
 
+// API routes
 app.use("/api/v1/docs", extractRouter);
 app.use("/api/v1/preprocessing", preprocessingRouter);
+app.use("/api/v1/semantic", semanticRouter);
 
 const startServer = () => {
   server = app.listen(PORT, () => {

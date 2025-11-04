@@ -23,9 +23,13 @@ export const extractText = async (filePath) => {
   const response = await textract.send(command);
 
   // Combine all detected lines into one text
-  const text = response.Blocks.filter((block) => block.BlockType === "LINE")
-    .map((block) => block.Text)
-    .join("\n");
+  // Filter out null/undefined/empty texts and trim each line
+  // Join with space since preprocessing normalizes all whitespace anyway
+  const text = response.Blocks
+    .filter((block) => block.BlockType === "LINE" && block.Text)
+    .map((block) => block.Text.trim())
+    .filter((text) => text.length > 0)
+    .join(" ");
 
   return text;
 };
