@@ -3,6 +3,7 @@ import "dotenv/config";
 import cors from "cors";
 import morgan from "morgan";
 import extractRouter from "./modules/document/document.route.js";
+import fraudRouter from "./modules/fraud/fraud.route.js";
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/docs", extractRouter);
+app.use("/api/v1/fraud", fraudRouter);
 
 const startServer = () => {
   server = app.listen(PORT, () => {
