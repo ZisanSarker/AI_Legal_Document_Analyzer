@@ -1,9 +1,9 @@
-// controllers/opticController.mjs
 import fs from "fs";
 import { unlink } from "fs/promises";
 import FormData from "form-data";
 import axios from "axios";
 
+/* keep your full prompt here */
 const FIXED_TEXT_QUERY = `Important: Make sure all JSON keys are in lower case and use underscores instead of spaces!
   
   Objective:
@@ -135,205 +135,79 @@ const REMOTE_ENDPOINT =
   "https://discrepancy-api.onrender.com/api/opticai";
 const API_KEY = process.env.DISCREPANCY_API_KEY;
 
-function buildFormForVariant(files, variant) {
-  // variant: { fileFieldName, includeAccountName, includeModelType }
-  const form = new FormData();
-
-  for (const f of files) {
-    form.append(variant.fileFieldName, fs.createReadStream(f.path), {
-      filename: f.originalname || f.filename || "upload",
-      contentType: f.mimetype || "application/octet-stream",
-    });
-  }
-
-  // always include user (as JSON string) because remote previously required it
-  form.append("user", JSON.stringify({ key: API_KEY }));
-
-  if (variant.includeAccountName) {
-    // try exact text used previously (with space)
-    form.append("accountName", variant.accountNameValue || "workflow 1");
-  }
-
-  if (variant.includeTextQuery) {
-    form.append("textQuery", FIXED_TEXT_QUERY);
-  }
-
-  if (variant.includeModelType) {
-    form.append("modelType", "smart");
-  }
-
-  return form;
-}
-
-async function sendForm(form) {
-  const length = await new Promise((resolve, reject) => {
-    form.getLength((err, len) => (err ? reject(err) : resolve(len)));
-  });
-
-  const headers = { ...form.getHeaders(), "Content-Length": length };
-
-  const resp = await axios.post(REMOTE_ENDPOINT, form, {
-    headers,
-    maxBodyLength: Infinity,
-    maxContentLength: Infinity,
-    timeout: 120_000,
-    validateStatus: null, // we'll handle status checking
-  });
-
-  return resp;
-}
-
-function cleanup(paths = []) {
-  return Promise.all(
+async function cleanup(paths = []) {
+  await Promise.all(
     paths.map(async (p) => {
       try {
         await unlink(p);
       } catch (e) {
-        /* ignore */
+        console.warn("Failed to delete temp file:", p, e.message);
       }
     })
   );
 }
 
-/**
- * Main handler: tries multiple payload variants until one works.
- * Expects multer.array('file') to populate req.files.
- */
 export async function analyzeDocument(req, res) {
-  const uploaded = Array.isArray(req.files)
-    ? req.files
-    : req.file
-    ? [req.file]
-    : [];
-  if (!uploaded.length)
-    return res.status(400).json({
-      error: 'No files uploaded. Field name should be "file" (multiple OK).',
-    });
-  if (!API_KEY)
+  // expect multer.array('files')
+  const uploaded = Array.isArray(req.files) ? req.files : [];
+  if (!uploaded.length) {
+    return res
+      .status(400)
+      .json({ error: 'No files uploaded. Field name should be "files".' });
+  }
+  if (!API_KEY) {
     return res
       .status(500)
       .json({ error: "Server misconfiguration: DISCREPANCY_API_KEY not set" });
-
-  // candidate file field names and whether to include other fields
-  const fileFieldNames = [
-    "file",
-    "files[]",
-    "files",
-    "document",
-    "documents",
-    "attachment",
-    "attachments",
-    "uploads",
-    "upload",
-  ];
-  // variations to try: include/exclude accountName and modelType and textQuery (some APIs forbid unexpected fields)
-  const accountNameValues = [
-    "workflow 1",
-    "workflow1",
-    "workflow-1",
-    "workflow",
-  ]; // try variants
-  const includeTextQueryOptions = [true]; // we keep textQuery in trials (remote expects prompt), but could try false if needed
-  const includeModelTypeOptions = [true, false]; // try with and without modelType
-  const includeAccountNameOptions = [true, false]; // try both
-
-  const attempts = [];
-
-  // build attempt list (limit growth)
-  for (const fileFieldName of fileFieldNames) {
-    for (const includeAccountName of includeAccountNameOptions) {
-      for (const includeModelType of includeModelTypeOptions) {
-        for (const includeTextQuery of includeTextQueryOptions) {
-          if (includeAccountName) {
-            for (const accountNameValue of accountNameValues) {
-              attempts.push({
-                fileFieldName,
-                includeAccountName,
-                includeModelType,
-                includeTextQuery,
-                accountNameValue,
-              });
-            }
-          } else {
-            attempts.push({
-              fileFieldName,
-              includeAccountName,
-              includeModelType,
-              includeTextQuery,
-              accountNameValue: null,
-            });
-          }
-        }
-      }
-    }
   }
 
-  // Optional: limit attempts to reasonable number (here it's small enough)
-  // console.log(`Will try ${attempts.length} payload variants...`);
+  const form = new FormData();
+
+  // append each file as 'files' (works for the API you tested)
+  for (const f of uploaded) {
+    form.append("files", fs.createReadStream(f.path), {
+      filename: f.originalname || f.filename || "upload",
+      contentType: f.mimetype || "application/octet-stream",
+    });
+  }
+
+  form.append("user", JSON.stringify({ key: API_KEY }));
+  form.append("accountName", "workflow 1");
+  form.append("textQuery", FIXED_TEXT_QUERY);
+  form.append("modelType", "smart");
 
   const tempPaths = uploaded.map((f) => f.path);
-  let lastError = null;
 
-  for (const [i, variant] of attempts.entries()) {
-    // build form and try send
-    const form = buildFormForVariant(uploaded, variant);
+  try {
+    const length = await new Promise((resolve, reject) => {
+      form.getLength((err, len) => (err ? reject(err) : resolve(len)));
+    });
 
-    try {
-      const resp = await sendForm(form);
+    const headers = { ...form.getHeaders(), "Content-Length": length };
 
-      // success if 2xx
-      if (resp.status >= 200 && resp.status < 300) {
-        // cleanup and return
-        await cleanup(tempPaths);
-        return res.status(resp.status).json(resp.data);
-      }
+    const resp = await axios.post(REMOTE_ENDPOINT, form, {
+      headers,
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+      timeout: 120_000,
+      validateStatus: null,
+    });
 
-      // remote returned an error - capture and continue to next variant
-      lastError = {
-        attempt: i + 1,
-        variant,
-        status: resp.status,
-        data: resp.data,
-      };
+    // forward remote response, plus a snake_cased version
+    const remoteData = resp.data;
 
-      // quick heuristic: if remote explicitly says missing 'user' or invalid key, stop trying
-      if (resp.data && typeof resp.data === "object") {
-        const low = JSON.stringify(resp.data).toLowerCase();
-        if (
-          low.includes("invalid api key") ||
-          low.includes("missing api key") ||
-          low.includes("user data is required")
-        ) {
-          // abort and return this immediate error
-          await cleanup(tempPaths);
-          return res.status(502).json({
-            error: resp.data,
-            note: "Aborting attempts due to auth/user key error.",
-          });
-        }
-      }
-      // otherwise continue trying
-    } catch (err) {
-      // network/other error sending this variant
-      lastError = {
-        attempt: i + 1,
-        variant,
-        error: err.message,
-        remoteResponse: err?.response?.data,
-      };
-      // continue trying other variants
-    }
+    return res.status(resp.status).json({
+      success: true,
+      remote_response: remoteData,
+    });
+  } catch (err) {
+    const status = err?.response?.status || 500;
+    const payload = err?.response?.data || {
+      message: err.message || "Unknown",
+    };
+    console.error("Forwarding error:", payload);
+    return res.status(status).json({ error: payload });
+  } finally {
+    await cleanup(tempPaths);
   }
-
-  // all attempts failed
-  await cleanup(tempPaths);
-
-  // respond with aggregated debug info (without exposing API key)
-  return res.status(502).json({
-    error: "All payload variants were rejected by remote API",
-    attempts_tried: attempts.length,
-    last_error: lastError,
-    suggestion:
-      "Try inspecting remote API docs or run a curl test; consider sending request to a request inspector to see what the remote expects.",
-  });
 }
