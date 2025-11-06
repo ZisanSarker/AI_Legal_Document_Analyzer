@@ -5,6 +5,7 @@ import morgan from "morgan";
 import extractRouter from "./modules/document/document.route.js";
 import preprocessingRouter from "./modules/preprocessing/preprocessing.route.js";
 import semanticRouter from "./modules/semantic/semantic.route.js";
+import fraudRouter from "./modules/fraud/fraud.route.js";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/docs", extractRouter);
 app.use("/api/v1/preprocessing", preprocessingRouter);
 app.use("/api/v1/semantic", semanticRouter);
+app.use("/api/v1/fraud", fraudRouter);
 
 const startServer = () => {
   server = app.listen(PORT, () => {
