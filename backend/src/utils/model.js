@@ -53,32 +53,48 @@ class ModelsManager {
   }
 
   async classifyText(text, modelType = 'semantic', candidateLabels = null) {
-    try {
-      const model =
-        candidateLabels && candidateLabels.length
-          ? this.models.zeroShot
-          : this.getModel(modelType);
+    const model = candidateLabels && candidateLabels.length
+      ? this.models.zeroShot
+      : this.getModel(modelType);
 
-      if (candidateLabels && candidateLabels.length) {
-        const response = await model.client.zeroShotClassification({
-          model: model.name,
-          inputs: text,
-          parameters: { 
-            candidate_labels: candidateLabels,
-            multi_label: true,
-          },
-        });
-        return response;
-      } else {
-        const response = await model.client.textClassification({
-          model: model.name,
-          inputs: text,
-        });
-        return response;
-      }
-    } catch (error) {
-      throw error;
+    if (candidateLabels && candidateLabels.length) {
+      const response = await model.client.zeroShotClassification({
+        model: model.name,
+        inputs: text,
+        parameters: {
+          candidate_labels: candidateLabels,
+          multi_label: true,
+        },
+      });
+      return this.normalizeZeroShot(response);
     }
+    return model.client.textClassification({
+      model: model.name,
+      inputs: text,
+    });
+  }
+
+  normalizeZeroShot(response) {
+    if (!response) return [];
+    if (Array.isArray(response)) {
+      const first = response[0];
+      if (first?.labels && first?.scores) {
+        return first.labels.map((l, i) => ({ label: l, score: first.scores[i] || 0 }))
+          .sort((a, b) => b.score - a.score);
+      }
+      if (first?.label && first?.score) {
+        return response.map(r => ({ label: r.label, score: r.score }))
+          .sort((a, b) => b.score - a.score);
+      }
+    }
+    if (response.labels && response.scores) {
+      return response.labels.map((l, i) => ({ label: l, score: response.scores[i] || 0 }))
+        .sort((a, b) => b.score - a.score);
+    }
+    if (response.label && response.score) {
+      return [{ label: response.label, score: response.score }];
+    }
+    return [];
   }
 
   async featureExtraction(text, modelType = 'semantic') {

@@ -11,7 +11,6 @@ export async function semanticController(req, res) {
 
     res.status(200).json({
       success: true,
-      message: 'Full semantic analysis complete.',
       data: result,
     });
   } catch (err) {

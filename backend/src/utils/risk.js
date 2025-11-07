@@ -1,39 +1,43 @@
 import { getZeroShotClassification } from './model.js';
 
 export async function detectRisks(text = '', clauses = []) {
+  if (!text?.trim()) {
+    return {
+      riskScore: 0,
+      riskLevel: 'Low Risk',
+      riskyTerms: [],
+      note: 'No valid text provided.'
+    };
+  }
+
   const riskyTerms = ['termination', 'penalty', 'liability', 'breach', 'indemnify'];
-  const found = riskyTerms.filter(w => text.toLowerCase().includes(w));
+  const found = riskyTerms.filter(term => text.toLowerCase().includes(term));
 
   const response = await getZeroShotClassification(text, ['Low Risk', 'Medium Risk', 'High Risk']);
-  const data = Array.isArray(response) ? response[0] : response;
-  const labels = data.labels || [];
-  const scores = data.scores || [];
+  const result = Array.isArray(response) ? response[0] : response;
+  const label = result?.label || result?.labels?.[0] || 'Medium Risk';
+  const score = result?.score || result?.scores?.[0] || 0.6;
 
-  const topLabel = labels[0] || 'Medium Risk';
-  const confidence = scores[0] || 0.6;
+  let base =
+    label === 'High Risk' ? score * 100 :
+    label === 'Medium Risk' ? score * 75 :
+    score * 40;
 
-  let riskScore =
-    topLabel === 'High Risk' ? Math.round(confidence * 100) :
-    topLabel === 'Medium Risk' ? Math.round(confidence * 75) :
-    Math.round(confidence * 40);
+  const overlapSet = new Set(['Liability', 'Termination', 'Breach']);
+  const overlapCount = clauses.filter(c => overlapSet.has(c.label)).length;
 
-  const overlap = clauses
-    .map(c => c.label)
-    .filter(c => ['Liability', 'Termination', 'Breach'].includes(c));
-
-  riskScore = Math.min(riskScore + (found.length + overlap.length) * 5, 100);
-  const level = riskScore >= 70 ? 'High Risk' : riskScore >= 40 ? 'Medium Risk' : 'Low Risk';
+  const riskScore = Math.min(Math.round(base + (found.length + overlapCount) * 5), 100);
+  const riskLevel = riskScore >= 70 ? 'High Risk' : riskScore >= 40 ? 'Medium Risk' : 'Low Risk';
 
   return {
     riskScore,
-    riskLevel: level,
-    modelConfidence: confidence,
+    riskLevel,
     riskyTerms: found,
     note:
-      level === 'High Risk'
+      riskLevel === 'High Risk'
         ? `⚠️ High legal risk detected (${found.join(', ') || 'contextual'}).`
-        : level === 'Medium Risk'
-        ? `⚠️ Moderate risk detected (${found.join(', ') || 'contextual'}).`
-        : `✅ Low risk detected (${found.join(', ') || 'none'}).`
+        : riskLevel === 'Medium Risk'
+        ? `⚠️ Moderate legal risk detected (${found.join(', ') || 'contextual'}).`
+        : `✅ Low legal risk detected (${found.join(', ') || 'none'}).`
   };
 }

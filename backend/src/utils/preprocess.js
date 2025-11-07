@@ -1,7 +1,8 @@
-export function preprocessText(text) {
+export function preprocessText(text = '') {
+  if (!text) return '';
   return text
-    .replace(/\s+/g, ' ')
     .replace(/\r?\n|\r/g, ' ')
+    .replace(/\s+/g, ' ')
     .replace(/[^\w\s.,;:()'-]/g, '')
     .trim();
 }
