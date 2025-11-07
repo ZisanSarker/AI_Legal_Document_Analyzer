@@ -90,43 +90,12 @@ export default function HomePage() {
 
       {!data ? (
         <main className="max-w-5xl mx-auto px-6 py-12 md:py-20">
-          {/* Hero Section */}
-          <div className="text-center mb-12 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
-              Analyze Legal Documents
-              <br />
-              <span className="bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                in Seconds
-              </span>
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Upload your contract or legal document and get instant AI-powered insights, 
-              risk assessment, and clause analysis.
-            </p>
-          </div>
-
           <DocumentUploader 
             onFileSelect={handleFileUpload} 
             onAnalyze={handleAnalyze}
             showAnalyzeButton={uploadComplete}
             isUploading={uploading}
           />
-
-          {/* Features */}
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-            {[
-              { icon: "🔍", title: "Smart Analysis", desc: "AI extracts key clauses and terms" },
-              { icon: "⚠️", title: "Risk Detection", desc: "Identifies potential issues" },
-              { icon: "🚨", title: "Fraud Detection", desc: "Detects suspicious patterns" },
-              { icon: "📊", title: "Summary Report", desc: "Get insights in seconds" }
-            ].map((feature, idx) => (
-              <div key={idx} className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-gray-200/50 shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-4xl mb-3">{feature.icon}</div>
-                <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-600">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
         </main>
       ) : (
         <main className="max-w-7xl mx-auto px-6 py-10">
