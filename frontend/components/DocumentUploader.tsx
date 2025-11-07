@@ -8,7 +8,7 @@ interface DocumentUploaderProps {
   onFileSelect?: (file: File | null) => void;
   onAnalyze?: () => void;
   onRiskAnalyze?: () => void;
-  onFraudDetection?: () => void;
+  onFraudDetection?: (file: File | null) => void;
   showAnalyzeButton?: boolean;
   isUploading?: boolean;
 }
@@ -354,7 +354,7 @@ export default function DocumentUploader({
 
                         {/* Fraud Detection Button - Redesigned */}
                         <button
-                          onClick={onFraudDetection}
+                          onClick={() => onFraudDetection?.(file)}
                           className="group relative overflow-hidden px-5 py-4 bg-white border-2 border-purple-200 hover:border-purple-400 text-gray-800 rounded-xl transition-all font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                         >
                           <div className="flex flex-col items-center space-y-2">

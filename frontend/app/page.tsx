@@ -7,26 +7,33 @@ import ClauseList from "@/components/ClauseList";
 import RiskMeter from "@/components/RiskMeter";
 import AnomalyBox from "@/components/AnomalyBox";
 import LoaderOverlay from "@/components/LoaderOverlay";
-import { uploadDocument, analyzeText } from "@/lib/api";
+import { uploadDocument, analyzeText, detectFraud } from "@/lib/api";
+import FraudResults from "@/components/FraudResults";
 import { Scale, Shield, FileCheck } from "lucide-react";
 
 export default function HomePage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMode, setLoadingMode] = useState<"semantic" | "fraud">("semantic");
   const [uploading, setUploading] = useState(false);
   const [extractedText, setExtractedText] = useState<string>("");
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [fraudData, setFraudData] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<"default" | "semantic" | "fraud">("default");
 
-  const handleFileUpload = async (file: File | null) => {
-    if (!file) {
+  const handleFileUpload = async (f: File | null) => {
+    if (!f) {
       setUploadComplete(false);
       setExtractedText("");
+      setFile(null);
       return;
     }
     
     setUploading(true);
     try {
-      const result = await uploadDocument(file);
+      setFile(f);
+      const result = await uploadDocument(f);
       setExtractedText(result.text);
       setUploadComplete(true);
     } catch (err) {
@@ -41,10 +48,12 @@ export default function HomePage() {
   const handleAnalyze = async () => {
     if (!extractedText) return;
     
+    setLoadingMode("semantic");
     setLoading(true);
     try {
       const result = await analyzeText(extractedText);
       setData(result.data);
+      setViewMode("semantic");
     } catch (err) {
       console.error("❌ Analysis failed:", err);
       alert("Failed to analyze document.");
@@ -56,10 +65,12 @@ export default function HomePage() {
   const handleRiskAnalyze = async () => {
     if (!extractedText) return;
     
+    setLoadingMode("semantic");
     setLoading(true);
     try {
       const result = await analyzeText(extractedText);
       setData(result.data);
+      setViewMode("semantic");
     } catch (err) {
       console.error("❌ Risk analysis failed:", err);
       alert("Failed to perform risk analysis.");
@@ -68,13 +79,20 @@ export default function HomePage() {
     }
   };
 
-  const handleFraudDetection = async () => {
-    if (!extractedText) return;
-    
+  const handleFraudDetection = async (selectedFile: File | null) => {
+    if (!selectedFile && !file) {
+      alert("No file available for fraud detection.");
+      return;
+    }
+    const targetFile = selectedFile || file;
+    if (!targetFile) return;
+
+    setLoadingMode("fraud");
     setLoading(true);
     try {
-      const result = await analyzeText(extractedText);
-      setData(result.data);
+      const result = await detectFraud(targetFile);
+      setFraudData(result);
+      setViewMode("fraud");
     } catch (err) {
       console.error("❌ Fraud detection failed:", err);
       alert("Failed to perform fraud detection.");
@@ -85,8 +103,11 @@ export default function HomePage() {
 
   const handleReset = () => {
     setData(null);
+    setFraudData(null);
     setUploadComplete(false);
     setExtractedText("");
+    setFile(null);
+    setViewMode("default");
   };
 
   return (
@@ -116,9 +137,9 @@ export default function HomePage() {
         </div>
       </header>
 
-      {loading && <LoaderOverlay />}
+      {loading && <LoaderOverlay mode={loadingMode} />}
 
-      {!data ? (
+  {viewMode === "default" ? (
         <main className="max-w-5xl mx-auto px-6 py-12 md:py-20">
           <DocumentUploader 
             onFileSelect={handleFileUpload} 
@@ -129,7 +150,7 @@ export default function HomePage() {
             isUploading={uploading}
           />
         </main>
-      ) : (
+      ) : viewMode === "semantic" && data ? (
         <main className="max-w-7xl mx-auto px-6 py-10">
           {/* Back Button */}
           <div className="mb-8">
@@ -159,7 +180,23 @@ export default function HomePage() {
             </div>
           </div>
         </main>
-      )}
+      ) : viewMode === "fraud" && fraudData ? (
+        <main className="max-w-7xl mx-auto px-6 py-10">
+          <div className="mb-6">
+            <button
+              onClick={handleReset}
+              className="group px-5 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-800 flex items-center gap-2 transition-colors"
+            >
+              <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              <span className="font-semibold">Back</span>
+            </button>
+          </div>
+          {/* Fraud Results Component */}
+          <div className="bg-white/70 backdrop-blur-sm rounded-3xl border border-gray-200 shadow-lg">
+            <FraudResults result={fraudData} onBack={handleReset} />
+          </div>
+        </main>
+      ) : null}
 
       {/* Footer */}
       <footer className="bg-white/60 backdrop-blur-sm border-t border-gray-200/50 mt-20">
