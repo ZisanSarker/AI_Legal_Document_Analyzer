@@ -53,6 +53,36 @@ export default function HomePage() {
     }
   };
 
+  const handleRiskAnalyze = async () => {
+    if (!extractedText) return;
+    
+    setLoading(true);
+    try {
+      const result = await analyzeText(extractedText);
+      setData(result.data);
+    } catch (err) {
+      console.error("❌ Risk analysis failed:", err);
+      alert("Failed to perform risk analysis.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFraudDetection = async () => {
+    if (!extractedText) return;
+    
+    setLoading(true);
+    try {
+      const result = await analyzeText(extractedText);
+      setData(result.data);
+    } catch (err) {
+      console.error("❌ Fraud detection failed:", err);
+      alert("Failed to perform fraud detection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleReset = () => {
     setData(null);
     setUploadComplete(false);
@@ -93,6 +123,8 @@ export default function HomePage() {
           <DocumentUploader 
             onFileSelect={handleFileUpload} 
             onAnalyze={handleAnalyze}
+            onRiskAnalyze={handleRiskAnalyze}
+            onFraudDetection={handleFraudDetection}
             showAnalyzeButton={uploadComplete}
             isUploading={uploading}
           />

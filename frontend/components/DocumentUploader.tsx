@@ -2,18 +2,22 @@
 
 import { useState, useEffect, DragEvent, ChangeEvent } from "react";
 import Image from "next/image";
-import { Upload, FileText, XCircle, CheckCircle, File, ArrowRight, Loader2 } from "lucide-react";
+import { Upload, FileText, XCircle, CheckCircle, File, ArrowRight, Loader2, Trash2, AlertTriangle, ShieldAlert } from "lucide-react";
 
 interface DocumentUploaderProps {
   onFileSelect?: (file: File | null) => void;
   onAnalyze?: () => void;
+  onRiskAnalyze?: () => void;
+  onFraudDetection?: () => void;
   showAnalyzeButton?: boolean;
   isUploading?: boolean;
 }
 
 export default function DocumentUploader({ 
   onFileSelect, 
-  onAnalyze, 
+  onAnalyze,
+  onRiskAnalyze,
+  onFraudDetection,
   showAnalyzeButton = false,
   isUploading = false
 }: DocumentUploaderProps) {
@@ -240,7 +244,7 @@ export default function DocumentUploader({
           ) : file ? (
             // File Selected State - Redesigned Card Layout
             <div className="p-10">
-              <div className="max-w-2xl mx-auto space-y-6">
+              <div className="max-w-2xl mx-auto">
                 {/* Main File Display Card */}
                 <div className="bg-linear-to-br from-gray-50 to-white rounded-3xl shadow-lg border-2 border-gray-200 overflow-hidden">
                   <div className="p-8">
@@ -304,7 +308,7 @@ export default function DocumentUploader({
                     </div>
                   </div>
                   
-                  {/* Success Banner */}
+                  {/* Success Banner with Delete Icon */}
                   {showAnalyzeButton && (
                     <div className="bg-linear-to-r from-green-500 to-emerald-500 px-8 py-4">
                       <div className="flex items-center justify-between">
@@ -317,27 +321,54 @@ export default function DocumentUploader({
                             <p className="text-sm text-green-50">Document is ready for AI analysis</p>
                           </div>
                         </div>
-                        <svg className="w-12 h-12 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        {/* Delete Icon on the right side */}
+                        <button
+                          onClick={handleRemove}
+                          className="group p-3 bg-white/20 hover:bg-red-500 text-white rounded-full transition-all shadow-md hover:shadow-lg"
+                          title="Delete and upload new document"
+                        >
+                          <Trash2 className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                        </button>
                       </div>
                     </div>
                   )}
-                </div>
-                
-                {/* Action Buttons Row */}
-                <div className="flex gap-4">
-                  <button
-                    onClick={handleRemove}
-                    className="flex-1 group py-4 px-6 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 rounded-2xl transition-all flex items-center justify-center space-x-3 font-semibold border-2 border-red-200 hover:border-red-400 shadow-md hover:shadow-lg"
-                  >
-                    <XCircle className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-                    <span>Remove</span>
-                  </button>
-                  
-                  <button className="flex-1 py-4 px-6 bg-gray-100 text-gray-400 rounded-2xl font-semibold border-2 border-gray-200 cursor-not-allowed" disabled>
-                    <span>Replace</span>
-                  </button>
+
+                  {/* Analysis Buttons inside the card */}
+                  {showAnalyzeButton && (
+                    <div className="p-6 bg-linear-to-br from-gray-50 to-white border-t border-gray-200">
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Risk Analysis Button - Redesigned */}
+                        <button
+                          onClick={onRiskAnalyze}
+                          className="group relative overflow-hidden px-5 py-4 bg-white border-2 border-orange-200 hover:border-orange-400 text-gray-800 rounded-xl transition-all font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                        >
+                          <div className="flex flex-col items-center space-y-2">
+                            <div className="w-10 h-10 bg-linear-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <AlertTriangle className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="text-sm font-bold">Risk Analysis</span>
+                            <span className="text-xs text-gray-500">Identify issues</span>
+                          </div>
+                          <div className="absolute inset-0 bg-linear-to-r from-orange-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
+                        </button>
+
+                        {/* Fraud Detection Button - Redesigned */}
+                        <button
+                          onClick={onFraudDetection}
+                          className="group relative overflow-hidden px-5 py-4 bg-white border-2 border-purple-200 hover:border-purple-400 text-gray-800 rounded-xl transition-all font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                        >
+                          <div className="flex flex-col items-center space-y-2">
+                            <div className="w-10 h-10 bg-linear-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <ShieldAlert className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="text-sm font-bold">Fraud Detection</span>
+                            <span className="text-xs text-gray-500">Detect patterns</span>
+                          </div>
+                          <div className="absolute inset-0 bg-linear-to-r from-purple-50 to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -419,59 +450,6 @@ export default function DocumentUploader({
           )}
         </div>
       </div>
-
-      {/* Analyze Button - Enhanced */}
-      {showAnalyzeButton && (
-        <div className="mt-10 space-y-6">
-          {/* Main Analyze Button */}
-          <div className="relative">
-            {/* Animated background glow */}
-            <div className="absolute -inset-1 bg-linear-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 animate-pulse"></div>
-            
-            <button
-              onClick={onAnalyze}
-              className="relative group w-full px-8 py-5 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all font-bold text-xl shadow-2xl hover:shadow-blue-500/50 transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-3"
-            >
-              {/* Icon with animation */}
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-              </div>
-              
-              <span>Analyze Document</span>
-              
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
-              
-              {/* Shine effect */}
-              <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-            </button>
-          </div>
-
-          {/* Info Cards */}
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-              <div className="flex items-center justify-center space-x-2 text-blue-600 mb-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span className="text-xs font-bold uppercase tracking-wide">Powered by AI</span>
-              </div>
-              <p className="text-sm text-gray-600">Advanced analysis</p>
-            </div>
-            
-            <div className="bg-linear-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
-              <div className="flex items-center justify-center space-x-2 text-purple-600 mb-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-xs font-bold uppercase tracking-wide">Fast Results</span>
-              </div>
-              <p className="text-sm text-gray-600">5-10 seconds</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
