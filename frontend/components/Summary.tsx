@@ -13,9 +13,11 @@ interface Clause {
 
 interface SummaryProps {
   summary: {
-    document_summary?: string;
+    document_summary_text?: string;
     clauses?: Clause[];
+    key_clauses?: string[];
     overall_risk_level?: string;
+    high_risk_count?: number;
     missing_required_clauses?: string[];
     potential_issues?: string[];
   };
@@ -27,9 +29,11 @@ const Summary: React.FC<SummaryProps> = ({ summary }) => {
   if (!summary || Object.keys(summary).length === 0) return null;
 
   const {
-    document_summary,
+    document_summary_text,
     clauses,
+    key_clauses,
     overall_risk_level,
+    high_risk_count,
     missing_required_clauses,
     potential_issues,
   } = summary;
@@ -53,45 +57,99 @@ const Summary: React.FC<SummaryProps> = ({ summary }) => {
     }
   };
 
+  const highlightKeywords = (text: string) => {
+    const patterns = [
+      { pattern: /(\d{1,2}-[A-Za-z]{3}-\d{4})/g, replacement: '<strong>$1</strong>' },
+      { pattern: /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Technologies|Corporation|Inc\.|LLC|Ltd\.|Company|Corp\.))/g, replacement: '<strong>$1</strong>' },
+      { pattern: /(Chittagong|Bangladesh|New York|California|Texas|United States|USA)/g, replacement: '<strong>$1</strong>' },
+      { pattern: /(\$\d+(?:,\d{3})*(?:\.\d{2})?)/g, replacement: '<strong>$1</strong>' },
+    ];
+    
+    let highlighted = text;
+    patterns.forEach(({ pattern, replacement }) => {
+      highlighted = highlighted.replace(pattern, replacement);
+    });
+    
+    return highlighted;
+  };
+
   return (
-    <div className="max-w-4xl mx-auto mt-8 p-6 bg-white rounded-2xl shadow-lg">
-      {/* Header */}
-      <h2 className="text-2xl font-bold mb-4 border-b pb-2">
+    <div className="max-w-4xl mx-auto mt-8 p-4 sm:p-6 bg-white rounded-2xl shadow-lg">
+      <h2 className="text-xl sm:text-2xl font-bold mb-6 border-b pb-2">
         Document Summary
       </h2>
 
-      {/* Overall Document Summary */}
-      {document_summary && (
-        <div
-          className="prose text-gray-700 mb-6 whitespace-pre-wrap"
-          dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(document_summary),
-          }}
-        />
-      )}
+      <div className="space-y-4">
+        {document_summary_text && document_summary_text.trim() && (
+          <div className="p-4 sm:p-5 rounded-lg bg-blue-50 border border-blue-100">
+            <div
+              className="text-sm sm:text-base text-gray-700 whitespace-pre-wrap leading-relaxed"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(highlightKeywords(document_summary_text)),
+              }}
+            />
+          </div>
+        )}
 
-      {/* Overall Risk */}
-      {overall_risk_level && (
-        <div
-          className={`inline-block px-3 py-1 rounded-full font-semibold mb-4 ${riskColor(
-            overall_risk_level
-          )}`}
-        >
-          Overall Risk: {overall_risk_level}
-        </div>
-      )}
+        {key_clauses && key_clauses.length > 0 && (
+          <div className="p-4 sm:p-5 rounded-lg bg-gray-50 border border-gray-200">
+            <p className="text-sm sm:text-base text-gray-700">
+              <span className="font-semibold">Key clauses identified:</span>{" "}
+              <span className="font-medium">{key_clauses.join(", ")}</span>
+            </p>
+          </div>
+        )}
 
-      {/* Clauses */}
+        {(overall_risk_level || (high_risk_count !== undefined && high_risk_count > 0)) && (
+          <div className="p-4 sm:p-5 rounded-lg bg-red-50 border border-red-100">
+            <div className="space-y-1">
+              {overall_risk_level && (
+                <p className="text-sm sm:text-base text-gray-700">
+                  <span className="font-semibold">Overall risk level:</span>{" "}
+                  <span className="font-bold text-red-600">{overall_risk_level}</span>
+                </p>
+              )}
+              {high_risk_count !== undefined && high_risk_count > 0 && (
+                <p className="text-sm sm:text-base text-gray-700">
+                  <span className="font-semibold">{high_risk_count}</span>{" "}
+                  {high_risk_count === 1 ? "high-risk clause" : "high-risk clauses"} detected.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {missing_required_clauses && missing_required_clauses.length > 0 && (
+          <div className="p-4 sm:p-5 rounded-lg bg-yellow-50 border border-yellow-200">
+            <p className="text-sm sm:text-base text-gray-700 mb-2">
+              <span className="font-semibold">Missing required clauses:</span>
+            </p>
+            <p className="text-sm sm:text-base text-gray-700 font-medium">
+              {missing_required_clauses.join(", ")}
+            </p>
+          </div>
+        )}
+
+        {potential_issues && potential_issues.length > 0 && (
+          <div className="p-4 sm:p-5 rounded-lg bg-orange-50 border border-orange-200">
+            <p className="text-sm sm:text-base text-gray-700 mb-2">
+              <span className="font-semibold">Potential issues:</span>
+            </p>
+            <p className="text-sm sm:text-base text-gray-700">{potential_issues.join("; ")}</p>
+          </div>
+        )}
+      </div>
+
       {clauses && clauses.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-xl font-semibold mb-2">Key Clauses</h3>
+        <div className="mt-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4">Detailed Clauses</h3>
           <div className="space-y-4">
             {clauses.map((clause, index) => {
               const isExpanded = expandedClauses.includes(index);
               return (
                 <div
                   key={index}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                  className="border rounded-lg p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer bg-white"
                   onClick={() => toggleClause(index)}
                 >
                   <div className="flex justify-between items-center">
@@ -135,32 +193,6 @@ const Summary: React.FC<SummaryProps> = ({ summary }) => {
               );
             })}
           </div>
-        </div>
-      )}
-
-      {/* Missing Required Clauses */}
-      {missing_required_clauses && missing_required_clauses.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-xl font-semibold mb-2">
-            Missing Required Clauses
-          </h3>
-          <ul className="list-disc list-inside text-red-600 space-y-1">
-            {missing_required_clauses.map((c, idx) => (
-              <li key={idx}>{c}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Potential Issues */}
-      {potential_issues && potential_issues.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-xl font-semibold mb-2">Potential Issues</h3>
-          <ul className="list-disc list-inside text-red-500 space-y-1">
-            {potential_issues.map((p, idx) => (
-              <li key={idx}>{p}</li>
-            ))}
-          </ul>
         </div>
       )}
     </div>
