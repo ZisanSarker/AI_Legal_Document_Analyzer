@@ -1,43 +1,33 @@
-import semanticService from './semantic.service.js';
+import { analyzeSemantic } from './semantic.service.js';
+import { extractText } from '../../utils/extract.js';
 
-export const handleSemanticAnalysis = async (req, res, next) => {
+export async function semanticController(req, res) {
   try {
-    const { chunks } = req.body;
-
-    if (!chunks || !Array.isArray(chunks) || chunks.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid request: chunks field is required and must be a non-empty array',
-        error: 'Missing or empty chunks array'
-      });
+    let text;
+    
+    // Check if file was uploaded
+    if (req.file) {
+      const filePath = req.file.path;
+      text = await extractText(filePath);
+    } else if (req.body.text) {
+      // Fallback to text from body
+      text = req.body.text;
+    } else {
+      return res.status(400).json({ error: 'No file or text provided.' });
     }
 
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      if (!chunk.text || typeof chunk.text !== 'string') {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid chunk at index ${i}: text field is required and must be a string`,
-          error: `Invalid chunk structure at index ${i}`
-        });
-      }
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'No text could be extracted.' });
     }
 
-    const result = await semanticService.analyzeDocument(chunks);
+    const result = await analyzeSemantic(text);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: 'Semantic analysis completed successfully',
-      data: result
+      data: result,
     });
-  } catch (error) {
-    console.error('Error in handleSemanticAnalysis:', error);
-
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error during semantic analysis',
-      error: error.message || 'An unexpected error occurred'
-    });
+  } catch (err) {
+    console.error('Semantic analysis error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
-};
-
+}
