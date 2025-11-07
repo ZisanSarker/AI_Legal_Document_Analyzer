@@ -64,7 +64,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <a href="/" className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
             <div className="bg-linear-to-br from-blue-500 to-indigo-600 p-2 rounded-lg">
               <Scale className="w-6 h-6 text-white" />
             </div>
@@ -72,7 +72,7 @@ export default function HomePage() {
               <h1 className="text-xl font-bold text-gray-900">Legal Document Analyzer</h1>
               <p className="text-xs text-gray-500">AI-Powered Contract Review</p>
             </div>
-          </div>
+          </a>
           <div className="hidden md:flex items-center space-x-6 text-sm text-gray-600">
             <div className="flex items-center space-x-2">
               <Shield className="w-4 h-4 text-green-600" />
@@ -113,10 +113,11 @@ export default function HomePage() {
           />
 
           {/* Features */}
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
             {[
               { icon: "🔍", title: "Smart Analysis", desc: "AI extracts key clauses and terms" },
               { icon: "⚠️", title: "Risk Detection", desc: "Identifies potential issues" },
+              { icon: "🚨", title: "Fraud Detection", desc: "Detects suspicious patterns" },
               { icon: "📊", title: "Summary Report", desc: "Get insights in seconds" }
             ].map((feature, idx) => (
               <div key={idx} className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-gray-200/50 shadow-sm hover:shadow-md transition-shadow">

@@ -395,39 +395,6 @@ export default function DocumentUploader({
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Info Cards Below */}
-                  <div className="grid grid-cols-3 gap-4 mt-6">
-                    <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm text-center">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      </div>
-                      <p className="text-sm font-semibold text-gray-700">Secure Upload</p>
-                      <p className="text-xs text-gray-500 mt-1">End-to-end encrypted</p>
-                    </div>
-                    
-                    <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm text-center">
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      </div>
-                      <p className="text-sm font-semibold text-gray-700">Fast Processing</p>
-                      <p className="text-xs text-gray-500 mt-1">AI-powered OCR</p>
-                    </div>
-                    
-                    <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm text-center">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <p className="text-sm font-semibold text-gray-700">Accurate Results</p>
-                      <p className="text-xs text-gray-500 mt-1">95%+ accuracy rate</p>
-                    </div>
-                  </div>
                 </div>
               </label>
             </div>
