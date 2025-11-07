@@ -1,17 +1,34 @@
 "use client";
 
-import { Loader2, FileSearch, Brain, Shield, CheckCircle2 } from "lucide-react";
+import { Loader2, FileSearch, Brain, Shield, CheckCircle2, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export default function LoaderOverlay() {
+interface LoaderOverlayProps {
+  mode?: "semantic" | "fraud";
+}
+
+export default function LoaderOverlay({ mode = "semantic" }: LoaderOverlayProps) {
   const [currentStep, setCurrentStep] = useState(0);
   
-  const steps = [
+  const semanticSteps = [
     { icon: FileSearch, text: "Reading document content", delay: 0 },
     { icon: Brain, text: "Analyzing with AI", delay: 2000 },
     { icon: Shield, text: "Detecting risks and anomalies", delay: 4000 },
     { icon: CheckCircle2, text: "Generating summary", delay: 6000 },
   ];
+
+  const fraudSteps = [
+    { icon: FileSearch, text: "Scanning document structure", delay: 0 },
+    { icon: ShieldAlert, text: "Detecting fraud patterns", delay: 2000 },
+    { icon: Brain, text: "Analyzing suspicious indicators", delay: 4000 },
+    { icon: CheckCircle2, text: "Compiling fraud report", delay: 6000 },
+  ];
+
+  const steps = mode === "fraud" ? fraudSteps : semanticSteps;
+  const title = mode === "fraud" ? "Detecting Fraud" : "Analyzing Document";
+  const description = mode === "fraud" 
+    ? "Our AI is scanning for fraud indicators and suspicious patterns"
+    : "Our AI is processing your document with advanced legal analysis";
 
   useEffect(() => {
     const timers = steps.map((step, index) => 
@@ -19,7 +36,7 @@ export default function LoaderOverlay() {
     );
     
     return () => timers.forEach(timer => clearTimeout(timer));
-  }, []);
+  }, [mode]);
 
   return (
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md flex flex-col items-center justify-center z-50">
@@ -44,10 +61,10 @@ export default function LoaderOverlay() {
         {/* Main Title */}
         <div className="space-y-3">
           <h3 className="text-3xl font-bold text-gray-900">
-            Analyzing Document
+            {title}
           </h3>
           <p className="text-base text-gray-600">
-            Our AI is processing your document with advanced legal analysis
+            {description}
           </p>
         </div>
 
